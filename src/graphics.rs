@@ -23,16 +23,27 @@ impl State {
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_with_display_handle({
             Box::new(display)
         }));
+        let surface = instance.create_surface(window.clone()).unwrap();
         let adapter = instance
-            .request_adapter(&wgpu::RequestAdapterOptions::default())
+            .request_adapter(&wgpu::RequestAdapterOptions {
+                power_preference: wgpu::PowerPreference::HighPerformance,
+                force_fallback_adapter: false,
+                compatible_surface: Some(&surface),
+                apply_limit_buckets: false,
+            })
             .await
             .unwrap();
         let (device, queue) = adapter
-            .request_device(&wgpu::DeviceDescriptor::default())
+            .request_device(&wgpu::DeviceDescriptor {
+                label: Some("Compute/Render Device"),
+                required_features: wgpu::Features::empty(),
+                required_limits: adapter.limits(),
+                memory_hints: wgpu::MemoryHints::Performance,
+                ..Default::default()
+            })
             .await
             .unwrap();
         let size = window.inner_size();
-        let surface = instance.create_surface(window.clone()).unwrap();
         let cap = surface.get_capabilities(&adapter);
         let surface_format = cap.formats[0];
 
